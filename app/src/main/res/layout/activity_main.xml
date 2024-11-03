@@ -11,7 +11,9 @@
         android:id="@+id/arFragment"
         android:name="com.google.ar.sceneform.ux.ArFragment"
         android:layout_width="match_parent"
-        android:layout_height="match_parent" />
+        android:layout_height="match_parent"
+        tools:layout_editor_absoluteX="-16dp"
+        tools:layout_editor_absoluteY="-225dp" />
 
     <TextView
         android:id="@+id/textView"
@@ -21,9 +23,10 @@
         android:scaleY="2"
         android:text="TextView"
         android:translationX="100px"
-        android:translationY="200px"
-        tools:layout_editor_absoluteX="148dp"
-        tools:layout_editor_absoluteY="257dp" />
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="@+id/arFragment"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/arFragment" />
     <!--
         <EditText
             android:id="@+id/editTextText"
