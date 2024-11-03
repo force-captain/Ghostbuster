@@ -133,7 +133,7 @@ public class MainActivity extends AppCompatActivity {
         arFragment.setOnTapArPlaneListener((HitResult hitResult, Plane plane, MotionEvent motionEvent) -> {
             // Load your model here
             ModelRenderable.builder()
-                    .setSource(this, Uri.parse("models/your_ghost_model.glb")) // Adjust the filename and format
+                    .setSource(this, Uri.parse("resources/models/ghost.glb")) // Adjust the filename and format
                     .build()
                     .thenAccept(renderable -> addModelToScene(hitResult, renderable))
                     .exceptionally(
