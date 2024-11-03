@@ -24,7 +24,14 @@ import com.google.ar.sceneform.rendering.MaterialFactory;
 import com.google.ar.sceneform.rendering.ModelRenderable;
 import com.google.ar.sceneform.rendering.ShapeFactory;
 import com.google.ar.sceneform.ux.ArFragment;
-import com.google.ar.schemas.lull.Quat;
+import com.google.ar.core.HitResult;
+import com.google.ar.core.Session;
+import com.google.ar.sceneform.ux.ArFragment;
+import com.google.ar.sceneform.ux.TransformableNode;
+//import com.google.ar.sceneform.renderables.ModelRenderable;
+import com.google.ar.core.Plane;
+import android.view.MotionEvent;  // For handling touch events
+import android.net.Uri;
 
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -123,6 +130,18 @@ public class MainActivity extends AppCompatActivity {
 
                 supportFragMgr = getSupportFragmentManager();
                 arFragment = (ArFragment) supportFragMgr.findFragmentById(R.id.arFragment);
+        arFragment.setOnTapArPlaneListener((HitResult hitResult, Plane plane, MotionEvent motionEvent) -> {
+            // Load your model here
+            ModelRenderable.builder()
+                    .setSource(this, Uri.parse("models/your_ghost_model.glb")) // Adjust the filename and format
+                    .build()
+                    .thenAccept(renderable -> addModelToScene(hitResult, renderable))
+                    .exceptionally(
+                            throwable -> {
+                                Toast.makeText(this, "Unable to load model", Toast.LENGTH_SHORT).show();
+                                return null;
+                            });
+        });
 
         if (arFragment.getArSceneView() != null) {
             arFragment.getArSceneView().getScene().addOnUpdateListener(frameTime -> {
@@ -149,6 +168,13 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+    }
+    private void addModelToScene(HitResult hitResult, ModelRenderable renderable) {
+        TransformableNode ghostNode = new TransformableNode(arFragment.getTransformationSystem());
+        ghostNode.setParent(arFragment.getArSceneView().getScene());
+        ghostNode.setRenderable(renderable);
+        ghostNode.select();
+        ghostNode.setWorldPosition(new Vector3(hitResult.getHitPose().tx(), hitResult.getHitPose().ty(), hitResult.getHitPose().tz()));
     }
 
     private AnchorNode createAnchorAtPosition(Vector3 position) {

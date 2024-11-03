@@ -30,6 +30,10 @@ android {
 
 dependencies {
     implementation "com.gorisse.thomas.sceneform:sceneform:1.23.0"
+    implementation 'com.google.ar:core:1.38.0' // Make sure you have the latest version
+    implementation 'com.google.ar.sceneform:sceneform:1.16.0' // Check that you are using the Sceneform dependency
+    implementation 'com.google.ar.sceneform:sceneform-ux:1.16.0'
+    implementation 'com.google.ar.sceneform.ux:sceneform-ux and import'
     implementation libs.appcompat
     implementation libs.material
     implementation libs.activity
@@ -38,3 +42,4 @@ dependencies {
     androidTestImplementation libs.ext.junit
     androidTestImplementation libs.espresso.core
 }
+
