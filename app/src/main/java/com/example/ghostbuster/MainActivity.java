@@ -199,6 +199,8 @@ public class MainActivity extends AppCompatActivity {
                 });
     }
 
+
+    Handler lineHandler = new Handler();
     // Credit to mickod, code taken from https://github.com/mickod/LineView
     private void drawLineToPoint(AnchorNode p1, Vector3 endv)
     {
@@ -222,8 +224,8 @@ public class MainActivity extends AppCompatActivity {
                             lineNode.setWorldRotation(rotation);
                         }
                 );
-
     }
+
 
     private AnchorNode moveRenderable(AnchorNode aNode, Pose nPose)
     {
