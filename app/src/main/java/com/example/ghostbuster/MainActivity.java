@@ -2,18 +2,17 @@ package com.example.ghostbuster;
 
 import android.os.Bundle;
 import android.os.Handler;
-import android.widget.Button;
-import android.widget.EditText;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
+import androidx.core.util.Pair;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.fragment.app.FragmentManager;
 
-import com.google.ar.core.Anchor;
 import com.google.ar.core.Pose;
 import com.google.ar.sceneform.AnchorNode;
 import com.google.ar.sceneform.math.Quaternion;
@@ -24,9 +23,10 @@ import com.google.ar.sceneform.rendering.ModelRenderable;
 import com.google.ar.sceneform.rendering.ShapeFactory;
 import com.google.ar.sceneform.ux.ArFragment;
 
-import java.util.Random;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 public class MainActivity extends AppCompatActivity {
     FragmentManager supportFragMgr;
@@ -35,9 +35,18 @@ public class MainActivity extends AppCompatActivity {
     private AnchorNode secondAnchorNode;
     private AnchorNode lineNode;
 
+    private TextView label;
+
     private boolean pointsSet = false;
 
     float xpos = 1f;
+
+    private float[] gyroData;
+    private boolean isFiring;
+
+    private boolean fetchingData;
+    private ExecutorService threadPool;
+    private Future<Pair<float[], Boolean>> fetchTask;
 
     private AnchorNode currentLineNode;  // Keep track of the current line node
 
@@ -45,14 +54,34 @@ public class MainActivity extends AppCompatActivity {
 
 
 
-    private String doThing() {
-        String val = "FAILED";
-        try {
-            val = new FetchDataTask().execute().get();
-        } catch (ExecutionException | InterruptedException e) {
-            throw new RuntimeException(e);
+    private Pair<float[], Boolean> getGunData() {
+
+        // Check if already waiting for server response
+        if (fetchingData) {
+            // If the server has responded, get the response.
+            if (fetchTask.isDone()) {
+                fetchingData = false;
+                try {
+                    Pair<float[], Boolean> result = fetchTask.get();
+                    gyroData = result.first;
+                    isFiring = result.second;
+                    return result;
+                } catch (ExecutionException e)
+                {
+                    e.printStackTrace();
+                } catch (InterruptedException e)
+                {
+                    e.printStackTrace();
+                }
+            }
+            return new Pair<float[], Boolean>(gyroData, isFiring);
         }
-        return val;
+
+        // Set up a listener
+        ExecutorService threadpool = Executors.newCachedThreadPool();
+        fetchTask = threadpool.submit(Client::fetchData);
+        fetchingData = true;
+        return new Pair<float[], Boolean>(gyroData, isFiring);
     }
 
     @Override
@@ -66,6 +95,15 @@ public class MainActivity extends AppCompatActivity {
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
             return insets;
         });
+
+        fetchingData = false;
+        label = findViewById(R.id.textView);
+
+        gyroData = new float[] {0, 0, 0};
+        isFiring = false;
+
+        // Set up data to regularly sync the gyro
+
 
         //Button btn = findViewById(R.id.button);
         //EditText txt = findViewById(R.id.editTextText);
@@ -92,6 +130,8 @@ public class MainActivity extends AppCompatActivity {
     protected void onResume() {
         super.onResume();
 
+        label.setText(Float.toString(getGunData().first[0]));
+
         arFragment = (ArFragment) getSupportFragmentManager().findFragmentById(R.id.arFragment);
 
         arFragment.getArSceneView().getScene().addOnUpdateListener(frameTime -> {
@@ -100,7 +140,7 @@ public class MainActivity extends AppCompatActivity {
                 xpos = (float) (xpos % 1.2);
                 //setPointsInARSpace(new Vector3(0, 0, 0), new Vector3(xpos, 0, 1));
                 //updateEndPosition(new Vector3(xpos,0,1));
-                handler.post(updateStartPositionTask);
+                handler.post(Update);
                 firstAnchorNode = createAnchorAtPosition(new Vector3(0,0,0));
                 drawLineBetweenPoints(firstAnchorNode,new Vector3(xpos,0,1));
 
@@ -224,18 +264,24 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private final Handler handler = new Handler();
-    private final Runnable updateStartPositionTask = new Runnable() {
+    private final Runnable Update = new Runnable() {
         @Override
         public void run() {
             updateStartNode();  // Update the start position with the device's current position
             handler.postDelayed(this, 1000);  // Repeat every second
+
+            Pair<float[], Boolean> gunData = getGunData();
+            boolean isFiring = gunData.second;
+            float[] gyroData = gunData.first;
+
+            Vector3 pointing = new Vector3(gyroData[1], gyroData[2], -gyroData[0]);
         }
     };
 
     @Override
     protected void onPause() {
         super.onPause();
-        handler.removeCallbacks(updateStartPositionTask);  // Stop updating on pause
+        handler.removeCallbacks(Update);  // Stop updating on pause
     }
 
 

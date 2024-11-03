@@ -1,22 +1,20 @@
 package com.example.ghostbuster;
 
-import android.os.AsyncTask;
-import android.util.Pair;
+import androidx.core.util.Pair;
 
-import java.io.Console;
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
-import java.net.InetAddress;
 import java.net.SocketException;
 
-public class FetchDataTask  {
+import kotlin.Triple;
 
-    static final String SERVER_IP = "10.252.93.103";
-    static final int PORT = 4999;
-    static DatagramSocket socket;
-    static byte[] buffer = new byte[256];
-    public static String doInBackground() {
+public class Client {
+
+    private static final int PORT = 4999;
+    private static DatagramSocket socket;
+    private static byte[] buffer = new byte[256];
+    public static Pair<float[], Boolean> fetchData() {
         String received = "";
         try{
             socket = new DatagramSocket(PORT);
@@ -33,14 +31,22 @@ public class FetchDataTask  {
                     e.printStackTrace();
                 }
                 socket.close();
+
+                // Parse and return the gyro data
                 String[] pieces = received.split(",");
-                return pieces[0];
+                return new Pair<float[], Boolean>(
+                        new float[] {   Float.parseFloat(pieces[0]),
+                                        Float.parseFloat(pieces[1]),
+                                        Float.parseFloat(pieces[2])},
+                                    pieces[3] == "1");
             }
         } catch (SocketException e)
         {
             e.printStackTrace();
         }
-        return "";
+
+        // Return default value if no server data
+        return new Pair<float[], Boolean>(new float[] {0, 0, 0}, false);
     }
 
 

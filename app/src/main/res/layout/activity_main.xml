@@ -12,23 +12,35 @@
         android:name="com.google.ar.sceneform.ux.ArFragment"
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
-<!--
-    <EditText
-        android:id="@+id/editTextText"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:ems="10"
-        android:inputType="text"
-        android:text="Name"
-        tools:layout_editor_absoluteX="141dp"
-        tools:layout_editor_absoluteY="129dp" />
 
-    <Button
-        android:id="@+id/button"
+    <TextView
+        android:id="@+id/textView"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Button"
+        android:scaleX="2"
+        android:scaleY="2"
+        android:text="TextView"
+        android:translationX="100px"
         android:translationY="200px"
-        tools:layout_editor_absoluteX="240dp"
-        tools:layout_editor_absoluteY="418dp" /> -->
+        tools:layout_editor_absoluteX="148dp"
+        tools:layout_editor_absoluteY="257dp" />
+    <!--
+        <EditText
+            android:id="@+id/editTextText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:ems="10"
+            android:inputType="text"
+            android:text="Name"
+            tools:layout_editor_absoluteX="141dp"
+            tools:layout_editor_absoluteY="129dp" />
+
+        <Button
+            android:id="@+id/button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Button"
+            android:translationY="200px"
+            tools:layout_editor_absoluteX="240dp"
+            tools:layout_editor_absoluteY="418dp" /> -->
 </androidx.constraintlayout.widget.ConstraintLayout>
