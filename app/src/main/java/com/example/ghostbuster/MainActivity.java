@@ -2,6 +2,7 @@ package com.example.ghostbuster;
 
 import android.os.Bundle;
 import android.os.Handler;
+import android.view.Gravity;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -13,7 +14,10 @@ import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.fragment.app.FragmentManager;
 
+import com.google.ar.core.Anchor;
+import com.google.ar.core.Frame;
 import com.google.ar.core.Pose;
+import com.google.ar.core.Session;
 import com.google.ar.sceneform.AnchorNode;
 import com.google.ar.sceneform.FrameTime;
 import com.google.ar.sceneform.Node;
@@ -22,10 +26,13 @@ import com.google.ar.sceneform.math.Vector3;
 import com.google.ar.sceneform.rendering.Color;
 import com.google.ar.sceneform.rendering.MaterialFactory;
 import com.google.ar.sceneform.rendering.ModelRenderable;
+import com.google.ar.sceneform.rendering.Renderable;
 import com.google.ar.sceneform.rendering.ShapeFactory;
 import com.google.ar.sceneform.ux.ArFragment;
+import com.google.ar.sceneform.ux.TransformableNode;
 import com.google.ar.schemas.lull.Quat;
 
+import java.util.Random;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -35,11 +42,15 @@ public class MainActivity extends AppCompatActivity {
     FragmentManager supportFragMgr;
     private ArFragment arFragment;
     private AnchorNode originNode;
+    private AnchorNode ghostAnchor;
     private Node lineNode;
+    private boolean loaded;
     private boolean lineDb;
 
+    private ModelRenderable ghostRenderable;
 
 
+    private Random rnd;
 
     private TextView label;
 
@@ -48,6 +59,7 @@ public class MainActivity extends AppCompatActivity {
     float xpos = 1f;
 
     private float[] gyroData;
+    private boolean wasFiring;
     private boolean isFiring;
 
 
@@ -73,6 +85,7 @@ public class MainActivity extends AppCompatActivity {
                 try {
                     Pair<float[], Boolean> result = fetchTask.get();
                     gyroData = result.first;
+                    wasFiring = isFiring;
                     isFiring = result.second;
                     return result;
                 } catch (ExecutionException e)
@@ -105,6 +118,9 @@ public class MainActivity extends AppCompatActivity {
             return insets;
         });
 
+
+        loaded = false;
+
         fetchingData = false;
         label = findViewById(R.id.textView);
 
@@ -132,14 +148,23 @@ public class MainActivity extends AppCompatActivity {
             });
         }
 
+        // Get the ghost model
+
+
+
+
+
+
 
     }
+
+
 
     @Override
     protected void onResume() {
         super.onResume();
 
-        originNode = createAnchorAtPosition(new Vector3(0,0,0));
+        originNode = createAnchorAtPosition(new Vector3(0,0.5f,-2.5f));
 
         arFragment = (ArFragment) getSupportFragmentManager().findFragmentById(R.id.arFragment);
         //drawLineBetweenPoints(firstAnchorNode, secondAnchorNode);
@@ -148,6 +173,9 @@ public class MainActivity extends AppCompatActivity {
                 onUpdate(frameTime);
             }
         });
+
+        rnd = new Random();
+
 
     }
 
@@ -164,26 +192,28 @@ public class MainActivity extends AppCompatActivity {
 
     private void placePoint(AnchorNode anchorNode) {
         // Create a small sphere at the anchor point to represent it visually
-        MaterialFactory.makeOpaqueWithColor(this, new Color(android.graphics.Color.RED))
+        MaterialFactory.makeOpaqueWithColor(this, new Color(android.graphics.Color.DKGRAY))
                 .thenAccept(material -> {
-                    ModelRenderable sphereRenderable = ShapeFactory.makeSphere(0.02f, new Vector3(0, 0, 0), material);
+                    ModelRenderable sphereRenderable = ShapeFactory.makeSphere(0.66f, anchorNode.getWorldPosition(), material);
                     anchorNode.setRenderable(sphereRenderable);
                 });
     }
 
+    // Credit to mickod, code taken from https://github.com/mickod/LineView
     private void drawLineToPoint(AnchorNode p1, Vector3 endv)
     {
+        removeLine(lineNode);
         Vector3 startv = p1.getWorldPosition();
 
         Vector3 difference = Vector3.subtract(startv, endv);
         Vector3 direction = difference.normalized();
         Quaternion rotation = Quaternion.lookRotation(direction, Vector3.up());
 
-        MaterialFactory.makeOpaqueWithColor(getApplicationContext(), new Color(255, 0, 0))
+        MaterialFactory.makeOpaqueWithColor(getApplicationContext(), new Color(0, 255, 0))
                 .thenAccept(
                         material -> {
                             ModelRenderable model = ShapeFactory.makeCube(
-                                    new Vector3(.01f, .01f, difference.length()), Vector3.zero(), material
+                                    new Vector3(.02f, .02f, difference.length()), Vector3.zero(), material
                             );
                             lineNode = new Node();
                             lineNode.setParent(p1);
@@ -193,50 +223,103 @@ public class MainActivity extends AppCompatActivity {
                         }
                 );
 
-        lineDb = false;
     }
 
+    private AnchorNode moveRenderable(AnchorNode aNode, Pose nPose)
+    {
+        if (aNode == null) return null;
+        arFragment.getArSceneView().getScene().removeChild(aNode);
+        Frame frame = arFragment.getArSceneView().getArFrame();
+        Session sess = arFragment.getArSceneView().getSession();
+        Anchor newAnchor = sess.createAnchor(nPose.extractTranslation());
+        AnchorNode newANode = new AnchorNode(newAnchor);
+        newANode.setRenderable(ghostRenderable);
+        newANode.setParent(arFragment.getArSceneView().getScene());
+        return newANode;
+    }
     private void removeLine(Node lNode)
     {
         if (lNode != null)
         {
-            lineDb = true;
             arFragment.getArSceneView().getScene().removeChild(lNode);
             lNode.setParent(null);
             lNode.setRenderable(null);
             lNode = null;
-            lineDb = false;
         }
     }
 
+    private void addGhost(Renderable render, Anchor anch)
+    {
 
+    }
     private void onUpdate(FrameTime frameTime)
     {
-        xpos  += 1e-2f;
-        xpos = (float) (xpos % 1.2);
-        //setPointsInARSpace(new Vector3(0, 0, 0), new Vector3(xpos, 0, 1));
-        //updateEndPosition(new Vector3(xpos,0,1));
-        //handler.post(updateStartPos);
-
-
-
-
         Pair<float[], Boolean> gunData = getGunData();
         boolean isFiring = gunData.second;
         float[] gyroData = gunData.first;
 
-        Vector3 pointing = new Vector3((float)Math.cos(gyroData[1]), (float)Math.cos(gyroData[2]), (float)Math.cos(gyroData[0]));
+        Vector3 pointing = new Vector3((float)Math.cos(gyroData[1]), (float)Math.cos(gyroData[2]), -(float)Math.cos(gyroData[0]));
 
         framesElapsedInMoveCycle += 1;
 
-        removeLine(lineNode);
-        if(isFiring && !lineDb) {
+        if (framesElapsedInMoveCycle > 100)
+        {
+            if (!loaded)
+            {
+                Frame frame = arFragment.getArSceneView().getArFrame();
+                Session sess = arFragment.getArSceneView().getSession();
+                Anchor gAnc = sess.createAnchor(
+                        frame.getCamera().getPose()
+                                .compose(Pose.makeTranslation(0, 0, -1f))
+                                .extractTranslation());
+
+                //drawLineToPoint(originNode, ghostAnchor.getWorldPosition());
+
+
+                ModelRenderable.builder()
+                        .setSource(this, R.raw.teapot)
+                        .build()
+                        .thenAccept(renderable -> ghostRenderable = renderable)
+                        .exceptionally(
+                                throwable -> {
+                                    Toast toast =
+                                            Toast.makeText(this, "Unable to load ghost renderable", Toast.LENGTH_LONG);
+                                    toast.setGravity(Gravity.CENTER, 0, 0);
+                                    toast.show();
+                                    return null;
+                                });
+                ghostAnchor = new AnchorNode(gAnc);
+                TransformableNode node = new TransformableNode(arFragment.getTransformationSystem());
+                node.setRenderable(ghostRenderable);
+                node.setParent(ghostAnchor);
+                arFragment.getArSceneView().getScene().addChild(ghostAnchor);
+                node.select();
+
+                loaded = true;
+            }
+            else {
+                float deltaX = (rnd.nextFloat() - 0.5f) * frameTime.getDeltaSeconds();
+                float deltaY = (rnd.nextFloat() - 0.5f) * frameTime.getDeltaSeconds();
+                float deltaZ = (float)Math.sin((double)framesElapsedInMoveCycle/360);
+
+                Anchor oldA = ghostAnchor.getAnchor();
+                Pose oldP = oldA.getPose();
+                Pose newP = oldP.compose(Pose.makeTranslation(deltaX, deltaY, deltaZ));
+                ghostAnchor = moveRenderable(ghostAnchor, newP);
+            }
+
+        }
+
+
+        if(isFiring && !wasFiring) {
             lineDb = true;
             drawLineToPoint(originNode, pointing.scaled(10f));
             label.setText("FIRING");
         }
         else {
+            removeLine(lineNode);
             label.setText(Float.toString(gyroData[0]));
+
         }
     }
 /*
