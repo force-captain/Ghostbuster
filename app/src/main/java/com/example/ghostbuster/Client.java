@@ -34,11 +34,12 @@ public class Client {
 
                 // Parse and return the gyro data
                 String[] pieces = received.split(",");
-                return new Pair<float[], Boolean>(
-                        new float[] {   Float.parseFloat(pieces[0]),
-                                        Float.parseFloat(pieces[1]),
-                                        Float.parseFloat(pieces[2])},
-                                    pieces[3] == "1");
+                float[] gyro = new float[] {   Float.parseFloat(pieces[0]),
+                        Float.parseFloat(pieces[1]),
+                        Float.parseFloat(pieces[2])};
+                boolean fire = "1".equals(pieces[3]);
+
+                return new Pair<float[], Boolean>(gyro, fire);
             }
         } catch (SocketException e)
         {
