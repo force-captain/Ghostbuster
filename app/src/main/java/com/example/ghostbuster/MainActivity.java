@@ -119,6 +119,7 @@ public class MainActivity extends AppCompatActivity {
         });
 
 
+
         loaded = false;
 
         fetchingData = false;
@@ -314,11 +315,11 @@ public class MainActivity extends AppCompatActivity {
         if(isFiring && !wasFiring) {
             lineDb = true;
             drawLineToPoint(originNode, pointing.scaled(10f));
-            label.setText("FIRING");
+            label.setText("");
         }
         else {
             removeLine(lineNode);
-            label.setText(Float.toString(gyroData[0]));
+            label.setText("");
 
         }
     }
