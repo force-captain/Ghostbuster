@@ -10,13 +10,13 @@ import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.SocketException;
 
-public class FetchDataTask extends AsyncTask<Void, Void, String> {
+public class FetchDataTask  {
 
     static final String SERVER_IP = "10.252.93.103";
     static final int PORT = 4999;
-    DatagramSocket socket;
-    byte[] buffer = new byte[256];
-    protected String doInBackground(Void... voids) {
+    static DatagramSocket socket;
+    static byte[] buffer = new byte[256];
+    public static String doInBackground() {
         String received = "";
         try{
             socket = new DatagramSocket(PORT);
