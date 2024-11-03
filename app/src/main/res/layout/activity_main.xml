@@ -7,12 +7,12 @@
     android:layout_height="match_parent"
     tools:context=".MainActivity">
 
-   <!-- <androidx.fragment.app.FragmentContainerView
+    <androidx.fragment.app.FragmentContainerView
         android:id="@+id/arFragment"
         android:name="com.google.ar.sceneform.ux.ArFragment"
         android:layout_width="match_parent"
-        android:layout_height="match_parent" /> -->
-
+        android:layout_height="match_parent" />
+<!--
     <EditText
         android:id="@+id/editTextText"
         android:layout_width="wrap_content"
@@ -30,5 +30,5 @@
         android:text="Button"
         android:translationY="200px"
         tools:layout_editor_absoluteX="240dp"
-        tools:layout_editor_absoluteY="418dp" />
+        tools:layout_editor_absoluteY="418dp" /> -->
 </androidx.constraintlayout.widget.ConstraintLayout>
